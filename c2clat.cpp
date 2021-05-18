@@ -35,16 +35,24 @@ void pinThread(int cpu) {
 int main(int argc, char *argv[]) {
 
   int nsamples = 1000;
+  int begin_core = 0;
+  int end_core = CPU_SETSIZE;
   bool plot = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "ps:")) != -1) {
+  while ((opt = getopt(argc, argv, "b:e:ps:")) != -1) {
     switch (opt) {
     case 'p':
       plot = true;
       break;
     case 's':
       nsamples = std::stoi(optarg);
+      break;
+    case 'b':
+      begin_core = std::max(std::stoi(optarg), 0);
+      break;
+    case 'e':
+      end_core = std::min(std::stoi(optarg), CPU_SETSIZE);
       break;
     default:
       goto usage;
@@ -53,8 +61,8 @@ int main(int argc, char *argv[]) {
 
   if (optind != argc) {
   usage:
-    std::cerr << "c2clat 1.0.0 © 2020 Erik Rigtorp <erik@rigtorp.se>\n"
-                 "usage: c2clat [-p] [-s number_of_samples]\n"
+    std::cerr << "c2clat 1.0.1 © 2020 Erik Rigtorp <erik@rigtorp.se>\n"
+                 "usage: c2clat [-p] [-s number_of_samples] [-b begin_core] [-e end_core]\n"
                  "\nPlot results using gnuplot:\n"
                  "c2clat -p | gnuplot -p\n";
     exit(1);
@@ -69,7 +77,7 @@ int main(int argc, char *argv[]) {
 
   // enumerate available CPUs
   std::vector<int> cpus;
-  for (int i = 0; i < CPU_SETSIZE; ++i) {
+  for (int i = begin_core; i <= end_core; ++i) {
     if (CPU_ISSET(i, &set)) {
       cpus.push_back(i);
     }
