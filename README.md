@@ -26,7 +26,16 @@ $ ./c2clat
 Create plot using [gnuplot](http://gnuplot.sourceforge.net/):
 
 ```console
-$ c2clat -p | gnuplot -p
+c2clat -p | gnuplot -p
 ```
 
 ![Plot of inter-core latency](https://github.com/rigtorp/c2clat/blob/master/c2clat.png)
+
+If you want to run on a subset of cores use [taskset](https://www.man7.org/linux/man-pages/man1/taskset.1.html):
+
+```console
+$ taskset -c 10-11 ./c2clat
+ CPU   10   11
+  10    0   52
+  11   52    0
+```
