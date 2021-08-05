@@ -34,7 +34,7 @@ void pinThread(int cpu) {
 
 int main(int argc, char *argv[]) {
 
-  int nsamples = 1000;
+  int nsamples = 10000;
   bool plot = false;
 
   int opt;
