@@ -2,10 +2,24 @@
 
 A tool to measure CPU core to core latency (inter-core latency).
 
-Build:
+## Build:
+
+### GCC
 
 ```console
 g++ -O3 -DNDEBUG c2clat.cpp -o c2clat -pthread
+```
+
+### CMake
+
+```console
+./builder/cmake-builder.sh -DCMAKE_BUILD_TYPE=Release
+```
+
+### CMake with Ninja
+
+```console
+./builder/ninja-builder.sh -DCMAKE_BUILD_TYPE=Release
 ```
 
 Example usage:
