@@ -1,2 +1,4 @@
 c2clat
 build/*
+build-*
+dockcross-*
