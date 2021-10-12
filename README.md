@@ -39,3 +39,10 @@ $ taskset -c 10-11 ./c2clat
   10    0   52
   11   52    0
 ```
+
+If you want to label the heatmap plot replace the plot command with:
+
+```gnuplot
+plot '$data' matrix rowheaders columnheaders using 2:1:3 with image, \
+     '$data' matrix rowheaders columnheaders using 2:1:(sprintf("%g",$3)) with labels
+```
