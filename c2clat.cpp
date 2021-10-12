@@ -118,20 +118,26 @@ int main(int argc, char *argv[]) {
 
   if (plot) {
     std::cout
+        << "reset\n"
+        << "set autoscale fix\n"
         << "set title \"Inter-core one-way data latency between CPU cores\"\n"
-        << "set xlabel \"CPU\"\n"
-        << "set ylabel \"CPU\"\n"
+        << "set xlabel \"Core N°\"\n"
+        << "set ylabel \"Core N°\"\n"
         << "set cblabel \"Latency (ns)\"\n"
+        << "unset key\n"
         << "$data << EOD\n";
   }
-
-  std::cout << std::setw(4) << "CPU";
-  for (size_t i = 0; i < cpus.size(); ++i) {
-    std::cout << " " << std::setw(4) << cpus[i];
+  if (!plot) {
+    std::cout << std::setw(4) << "CPU";
+    for (size_t i = 0; i < cpus.size(); ++i) {
+      std::cout << " " << std::setw(4) << cpus[i];
+    }
+    std::cout << std::endl;
   }
-  std::cout << std::endl;
   for (size_t i = 0; i < cpus.size(); ++i) {
-    std::cout << std::setw(4) << cpus[i];
+    if (!plot) {
+      std::cout << std::setw(4) << cpus[i];
+    }
     for (size_t j = 0; j < cpus.size(); ++j) {
       std::cout << " " << std::setw(4) << data[{i, j}].count();
     }
@@ -140,8 +146,7 @@ int main(int argc, char *argv[]) {
 
   if (plot) {
     std::cout << "EOD\n"
-              << "plot '$data' matrix rowheaders columnheaders using 2:1:3 "
-                 "with image\n";
+              << "plot '$data' matrix with image, '' matrix using 1:2:(sprintf('%d', $3)) with labels font ',auto'\n";
   }
 
   return 0;
