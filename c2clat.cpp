@@ -7,7 +7,7 @@
 // g++ -O3 -DNDEBUG c2clat.cpp -o c2clat -pthread
 //
 // Plot results using gnuplot:
-// $ ./c2clat -p | gnuplot -p
+// $ c2clat -p | gnuplot -p
 
 #include <sched.h>
 #include <stdio.h>
