@@ -155,10 +155,11 @@ int main(int argc, char *argv[]) {
                  "14 '#ff0035', 15 '#ff0625', 16 '#ff2113', 17 '#ff3903', "
                  "18 '#ff5400', 19 '#ff6c00', 20 '#ff8400', 21 '#ff9c00', "
                  "22 '#ffb400', 23 '#ffcc00', 24 '#ffe400', 25 '#fffc00')\n"
+              << "#set tics font \",7\"\n"
               << "plot '$data' matrix rowheaders columnheaders using 2:1:3 "
                  "notitle with image, "
                  "'$data' matrix rowheaders columnheaders using "
-                 "2:1:(sprintf(\"%g\",$3)) notitle with labels\n";
+                 "2:1:(sprintf(\"%g\",$3)) notitle with labels #font \",5\"\n";
   }
 
   return 0;
