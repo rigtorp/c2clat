@@ -36,15 +36,19 @@ int main(int argc, char *argv[]) {
 
   int nsamples = 1000;
   bool plot = false;
+  bool smt = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "ps:")) != -1) {
+  while ((opt = getopt(argc, argv, "ps:t")) != -1) {
     switch (opt) {
     case 'p':
       plot = true;
       break;
     case 's':
       nsamples = std::stoi(optarg);
+      break;
+    case 't':
+      smt = true;
       break;
     default:
       goto usage;
@@ -54,7 +58,8 @@ int main(int argc, char *argv[]) {
   if (optind != argc) {
   usage:
     std::cerr << "c2clat 1.0.0 © 2020 Erik Rigtorp <erik@rigtorp.se>\n"
-                 "usage: c2clat [-p] [-s number_of_samples]\n"
+                 "usage: c2clat [-p] [-t] [-s number_of_samples]\n"
+                 "Use -t to interleave hardware threads with cores.\n"
                  "\nPlot results using gnuplot:\n"
                  "c2clat -p | gnuplot -p\n";
     exit(1);
@@ -127,13 +132,16 @@ int main(int argc, char *argv[]) {
 
   std::cout << std::setw(4) << "CPU";
   for (size_t i = 0; i < cpus.size(); ++i) {
-    std::cout << " " << std::setw(4) << cpus[i];
+    size_t c0 = smt ? (i >> 1) + (i & 1) * cpus.size() / 2 : i;
+    std::cout << " " << std::setw(4) << cpus[c0];
   }
   std::cout << std::endl;
   for (size_t i = 0; i < cpus.size(); ++i) {
-    std::cout << std::setw(4) << cpus[i];
+    size_t c0 = smt ? (i >> 1) + (i & 1) * cpus.size() / 2 : i;
+    std::cout << std::setw(4) << cpus[c0];
     for (size_t j = 0; j < cpus.size(); ++j) {
-      std::cout << " " << std::setw(4) << data[{i, j}].count();
+      size_t c1 = smt ? (j >> 1) + (j & 1) * cpus.size() / 2 : j;
+      std::cout << " " << std::setw(4) << data[{c0, c1}].count();
     }
     std::cout << std::endl;
   }
