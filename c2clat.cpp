@@ -37,10 +37,11 @@ int main(int argc, char *argv[]) {
   int nsamples = 1000;
   bool plot = false;
   bool smt = false;
+  bool use_write = false;
   const char *name = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "n:ps:t")) != -1) {
+  while ((opt = getopt(argc, argv, "n:ps:tw")) != -1) {
     switch (opt) {
     case 'n':
       name = optarg;
@@ -54,6 +55,9 @@ int main(int argc, char *argv[]) {
     case 't':
       smt = true;
       break;
+    case 'w':
+      use_write = true;
+      break;
     default:
       goto usage;
     }
@@ -62,9 +66,10 @@ int main(int argc, char *argv[]) {
   if (optind != argc) {
   usage:
     std::cerr << "c2clat 1.0.0 © 2020 Erik Rigtorp <erik@rigtorp.se>\n"
-                 "usage: c2clat [-p] [-t] [-n name] [-s number_of_samples]\n"
+                 "usage: c2clat [-p] [-t] [-w] [-n name] [-s number_of_samples]\n"
                  "Use -t to interleave hardware threads with cores.\n"
                  "The name passed using -n appears in the graph's title.\n"
+                 "Use write cycles instead of read cycles with -w.\n"
                  "\nPlot results using gnuplot:\n"
                  "c2clat -p | gnuplot -p\n";
     exit(1);
@@ -96,10 +101,22 @@ int main(int argc, char *argv[]) {
       auto t = std::thread([&] {
         pinThread(cpus[i]);
         for (int m = 0; m < nsamples; ++m) {
-          for (int n = 0; n < 100; ++n) {
-            while (seq1.load(std::memory_order_acquire) != n)
+          if (!use_write) {
+            for (int n = 0; n < 100; ++n) {
+              while (seq1.load(std::memory_order_acquire) != n)
+                ;
+              seq2.store(n, std::memory_order_release);
+            }
+          } else {
+            while (seq2.load(std::memory_order_acquire) != 0)
               ;
-            seq2.store(n, std::memory_order_release);
+            seq2.store(1, std::memory_order_release);
+            for (int n = 0; n < 100; ++n) {
+              int cmp;
+              do {
+                cmp = 2 * n;
+              } while (!seq1.compare_exchange_strong(cmp, cmp + 1));
+            }
           }
         }
       });
@@ -109,14 +126,34 @@ int main(int argc, char *argv[]) {
       pinThread(cpus[j]);
       for (int m = 0; m < nsamples; ++m) {
         seq1 = seq2 = -1;
-        auto ts1 = std::chrono::steady_clock::now();
-        for (int n = 0; n < 100; ++n) {
-          seq1.store(n, std::memory_order_release);
-          while (seq2.load(std::memory_order_acquire) != n)
+        if (!use_write) {
+          auto ts1 = std::chrono::steady_clock::now();
+          for (int n = 0; n < 100; ++n) {
+            seq1.store(n, std::memory_order_release);
+            while (seq2.load(std::memory_order_acquire) != n)
+              ;
+          }
+          auto ts2 = std::chrono::steady_clock::now();
+          rtt = std::min(rtt, ts2 - ts1);
+        } else {
+          // wait for the other thread to be ready
+          seq2.store(0, std::memory_order_release);
+          while (seq2.load(std::memory_order_acquire) == 0)
             ;
+          seq2.store(-1, std::memory_order_release);
+          auto ts1 = std::chrono::steady_clock::now();
+          for (int n = 0; n < 100; ++n) {
+            int cmp;
+            do {
+              cmp = 2 * n - 1;
+            } while (!seq1.compare_exchange_strong(cmp, cmp + 1));
+          }
+          // wait for the other thread to see the last value
+          while (seq1.load(std::memory_order_acquire) != 199)
+            ;
+          auto ts2 = std::chrono::steady_clock::now();
+          rtt = std::min(rtt, ts2 - ts1);
         }
-        auto ts2 = std::chrono::steady_clock::now();
-        rtt = std::min(rtt, ts2 - ts1);
       }
 
       t.join();
@@ -129,7 +166,8 @@ int main(int argc, char *argv[]) {
   if (plot) {
     std::cout
         << "set title \"" << (name ? name : "") << (name ? " : " : "")
-        << "Inter-core one-way data latency between CPU cores\"\n"
+        << "Inter-core one-way " << (use_write ? "write" : "data")
+        << " latency between CPU cores\"\n"
         << "set xlabel \"CPU\"\n"
         << "set ylabel \"CPU\"\n"
         << "set cblabel \"Latency (ns)\"\n"
