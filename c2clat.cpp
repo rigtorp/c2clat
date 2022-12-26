@@ -38,11 +38,15 @@ int main(int argc, char *argv[]) {
   bool plot = false;
   bool smt = false;
   bool use_write = false;
+  bool preheat = false;
   const char *name = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "n:ps:tw")) != -1) {
+  while ((opt = getopt(argc, argv, "Hn:ps:tw")) != -1) {
     switch (opt) {
+    case 'H':
+      preheat = true;
+      break;
     case 'n':
       name = optarg;
       break;
@@ -66,10 +70,11 @@ int main(int argc, char *argv[]) {
   if (optind != argc) {
   usage:
     std::cerr << "c2clat 1.0.0 © 2020 Erik Rigtorp <erik@rigtorp.se>\n"
-                 "usage: c2clat [-p] [-t] [-w] [-n name] [-s number_of_samples]\n"
+                 "usage: c2clat [-Hptw] [-n name] [-s number_of_samples]\n"
                  "Use -t to interleave hardware threads with cores.\n"
                  "The name passed using -n appears in the graph's title.\n"
                  "Use write cycles instead of read cycles with -w.\n"
+                 "Use -H to preheat each core for 200ms before measuring.\n"
                  "\nPlot results using gnuplot:\n"
                  "c2clat -p | gnuplot -p\n";
     exit(1);
@@ -100,6 +105,16 @@ int main(int argc, char *argv[]) {
 
       auto t = std::thread([&] {
         pinThread(cpus[i]);
+
+        if (preheat) {
+          auto init = std::chrono::steady_clock::now();
+          while (1) {
+            auto now = std::chrono::steady_clock::now();
+            if ((now - init).count() >= 200000000)
+              break;
+          }
+        }
+
         for (int m = 0; m < nsamples; ++m) {
           if (!use_write) {
             for (int n = 0; n < 100; ++n) {
@@ -124,6 +139,16 @@ int main(int argc, char *argv[]) {
       std::chrono::nanoseconds rtt = std::chrono::nanoseconds::max();
 
       pinThread(cpus[j]);
+
+      if (preheat) {
+        auto init = std::chrono::steady_clock::now();
+        while (1) {
+          auto now = std::chrono::steady_clock::now();
+          if ((now - init).count() >= 200000000)
+            break;
+        }
+      }
+
       for (int m = 0; m < nsamples; ++m) {
         seq1 = seq2 = -1;
         if (!use_write) {
