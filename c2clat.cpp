@@ -37,10 +37,14 @@ int main(int argc, char *argv[]) {
   int nsamples = 1000;
   bool plot = false;
   bool smt = false;
+  const char *name = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "ps:t")) != -1) {
+  while ((opt = getopt(argc, argv, "n:ps:t")) != -1) {
     switch (opt) {
+    case 'n':
+      name = optarg;
+      break;
     case 'p':
       plot = true;
       break;
@@ -58,8 +62,9 @@ int main(int argc, char *argv[]) {
   if (optind != argc) {
   usage:
     std::cerr << "c2clat 1.0.0 © 2020 Erik Rigtorp <erik@rigtorp.se>\n"
-                 "usage: c2clat [-p] [-t] [-s number_of_samples]\n"
+                 "usage: c2clat [-p] [-t] [-n name] [-s number_of_samples]\n"
                  "Use -t to interleave hardware threads with cores.\n"
+                 "The name passed using -n appears in the graph's title.\n"
                  "\nPlot results using gnuplot:\n"
                  "c2clat -p | gnuplot -p\n";
     exit(1);
@@ -123,7 +128,8 @@ int main(int argc, char *argv[]) {
 
   if (plot) {
     std::cout
-        << "set title \"Inter-core one-way data latency between CPU cores\"\n"
+        << "set title \"" << (name ? name : "") << (name ? " : " : "")
+        << "Inter-core one-way data latency between CPU cores\"\n"
         << "set xlabel \"CPU\"\n"
         << "set ylabel \"CPU\"\n"
         << "set cblabel \"Latency (ns)\"\n"
