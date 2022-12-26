@@ -140,6 +140,13 @@ int main(int argc, char *argv[]) {
 
   if (plot) {
     std::cout << "EOD\n"
+              << "set palette defined (0 '#80e0e0', 1 '#54e0eb', "
+                 "2 '#34d4f3', 3 '#26baf9', 4 '#40a0ff', 5 '#5888e7', "
+                 "6 '#6e72d1', 7 '#845cbb', 8 '#9848a7', 9 '#ac3493', "
+                 "10 '#c0207f', 11 '#d20e6d', 12 '#e60059', 13 '#f80047', "
+                 "14 '#ff0035', 15 '#ff0625', 16 '#ff2113', 17 '#ff3903', "
+                 "18 '#ff5400', 19 '#ff6c00', 20 '#ff8400', 21 '#ff9c00', "
+                 "22 '#ffb400', 23 '#ffcc00', 24 '#ffe400', 25 '#fffc00')\n"
               << "plot '$data' matrix rowheaders columnheaders using 2:1:3 "
                  "notitle with image, "
                  "'$data' matrix rowheaders columnheaders using "
