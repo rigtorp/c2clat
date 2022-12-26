@@ -141,7 +141,9 @@ int main(int argc, char *argv[]) {
   if (plot) {
     std::cout << "EOD\n"
               << "plot '$data' matrix rowheaders columnheaders using 2:1:3 "
-                 "notitle with image\n";
+                 "notitle with image, "
+                 "'$data' matrix rowheaders columnheaders using "
+                 "2:1:(sprintf(\"%g\",$3)) notitle with labels\n";
   }
 
   return 0;
